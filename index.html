@@ -80,6 +80,10 @@
         <p id="chart">
         </p>
         <p id="menu"><b>State Data: </b><select></select></p>
+        <form>
+          <input class='dataButton' checked='checked' type='radio' name='dataset_button' value='crunchbaseDataButton' id='crunchbase_dataset'> Crunchbase Data<br>
+          <input class = 'dataButton' type = 'radio' name='dataset_button' value='cbpDataButton' id='cbp_dataset'> CBP Data
+        </form>
         </div>
         <script>
 
@@ -114,6 +118,9 @@
 
         var menu = d3.select("#menu select")
                      .on("change", change);
+
+        var radioButton = d3.selectAll(".dataButton")
+                            .on("change", change);
 
         var format = d3.format(",d");
 
@@ -256,7 +263,13 @@
 
           d3.transition(svg).select(".x.axis")
               .attr("transform", function() { return "translate(0," + height + ")"; } )
-              .call(xAxis);
+              .call(xAxis)
+            .append("text")
+              .attr("x", width / 2)
+              .attr("y", 25)
+              .attr("dy", ".71em")
+              .style("text-anchor", "middle")
+              .text("Number of Companies");
         }
 
         function type(d) {
