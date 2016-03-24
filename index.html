@@ -30,12 +30,12 @@
         <style>
 
         .svg rect {
-          fill: steelblue;
+          fill: rgb(45,99,127);
         }
 
         .svg rect:hover {
-          stroke-width:5;
-          stroke:rgb(253,181,21);
+          /*stroke-width:5;*/
+          fill:rgb(194,185,167);
         }
 
         .axis text {
@@ -126,6 +126,7 @@
         d3.csv("us_law_schools_by_city_state_county.csv", function(error, law_school_data) {
           law_schools = law_school_data;
           nest_schools = d3.nest()
+                           .key(function(d) { return d._state; })
                            .key(function(d) { return d._county; })
                            .map(law_school_data);
         })
@@ -274,10 +275,10 @@
 			}
 
         function mousemove(d) {
-          if(nest_schools[d.county_name] == undefined) {
+          if(nest_schools[d.state_name][d.county_name] == undefined) {
             var num_schools = 0
           } else {
-            var num_schools = nest_schools[d.county_name].length
+            var num_schools = nest_schools[d.state_name][d.county_name].length
           }
           div
               .html("<b>Number of Law Schools: </b>" + num_schools)
