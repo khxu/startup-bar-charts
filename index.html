@@ -6,7 +6,6 @@
         <title>Bar Chart of Startup Activity</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-
         <link rel="apple-touch-icon" href="apple-touch-icon.png">
         <!-- Place favicon.ico in the root directory -->
 
@@ -35,7 +34,7 @@
 
         .svg rect:hover {
           /*stroke-width:5;*/
-          fill:rgb(194,185,167);
+          fill: rgb(194,185,167);
         }
 
         .axis text {
@@ -71,11 +70,28 @@
 			  background: #ddd;
 			  pointer-events: none;
 				opacity: 0.9;
-			}
+			  }
+
+        .legend-border {
+         stroke-width: 1;
+         stroke: rgb(0,0,0);
+        }
+
+        .legend-text {
+          font: 10px sans-serif;
+        }
+
+        .legend-text_0 {
+          font-weight: bold;
+        }
+
+        .legend-text_5 {
+          fill: rgb(255,255,255);
+        }
 
         </style>
         <div class="column">
-        <h1>Top 10 Counties by Number of Companies</h1>
+        <h1>Top 15 Counties by Number of Companies</h1>
 
         <p id="chart">
         </p>
@@ -87,8 +103,8 @@
         </div>
         <script>
 
-        var margin = {top: 20, right: 30, bottom: 60, left: 170},
-        width = 900 - margin.left - margin.right,
+        var margin = {top: 20, right: 175, bottom: 20, left: 170},
+        width = 960 - margin.left - margin.right,
         height = 400 - margin.top - margin.bottom;
 
         var x = d3.scale.linear()
@@ -107,8 +123,22 @@
                           .scale(x)
                           .orient("bottom");
 
+        var legendRectSizeX = 120,
+					legendRectSizeY = 15,
+					legendSpacing = 4;
+
+        var legendColors = d3.scale.ordinal()
+            .domain(["LEGEND", "Number of Law Schools", "0", "1-2", "3-4", "5+"])
+            .range(["rgb(255,255,255)", "rgb(255,255,255)", "rgb(239,243,255)", "rgb(189,215,231)", "rgb(107,174,214)", "rgb(33,113,181)"]);
+
         svg.append("g")
-           .attr("class", "x axis");
+           .attr("class", "x axis")
+           .append("text")
+           .attr("x", width / 2)
+           .attr("y", 25)
+           .attr("dy", ".71em")
+           .style("text-anchor", "middle")
+           .text("Number of Companies");
 
         svg.append("g")
            .attr("class", "y axis")
@@ -116,11 +146,58 @@
            .attr("class", "domain")
            .attr("y2", height);
 
+        svg.append("g")
+           .attr("id", "legend");
+
+        svg.append("rect")
+  				 .attr("class", "legend-border")
+  				 .attr("width", legendRectSizeX)
+  				 .attr("height", legendRectSizeY*6)
+  				 .attr("x", width + 45)
+  				 .attr("y", (height / 2) - ((legendRectSizeY*6) / 2))
+  				 .style("fill", "none");
+
+        var legend = d3.select("#legend");
+
+        legend.selectAll("rect")
+           .data(legendColors.range())
+           .enter()
+           .append("rect")
+           .attr("width", legendRectSizeX)
+           .attr("height", function(d, i) { return legendRectSizeY; })
+           .attr("x", width + 45)
+           .attr("y", function(d, i) { return (height / 2) - ((legendRectSizeY*6) / 2) + i*legendRectSizeY; })
+           .attr("dy", "1.1em")
+           .style("fill", function(d){ return d; });
+
+        legend.append("line")
+   				 .attr("class", "legend-separator")
+   				 .attr("x1", width + 45)
+   				 .attr("y1", (height / 2) - ((legendRectSizeY*6) / 2) + legendRectSizeY)
+   				 .attr("x2", width + 45 + legendRectSizeX)
+   				 .attr("y2", (height / 2) - ((legendRectSizeY*6) / 2) + legendRectSizeY)
+   				 .style("stroke", "rgb(0,0,0)")
+   				 .style("stroke-width", "1");
+
+        legend.selectAll("text")
+           .data(legendColors.domain())
+           .enter()
+           .append("text")
+           .attr("x", width + 45 + legendRectSizeX/2)
+           .attr("y", function(d, i) {return (height / 2) - ((legendRectSizeY*6) / 2) + i*legendRectSizeY} )
+           .attr("dy", "1.1em")
+           .attr("class", function(d,i) { return "legend-text legend-text_" + i; })
+           .style("text-anchor", "middle")
+           .text(function(d) { return d; });
+
         var menu = d3.select("#menu select")
                      .on("change", change);
 
-        var radioButton = d3.selectAll(".dataButton")
-                            .on("change", change);
+        var crunchbaseRadioButton = d3.select("#crunchbase_dataset")
+                                      .on("click", change);
+
+        var cbpRadioButton = d3.select("#cbp_dataset")
+                               .on("click", change);
 
         var format = d3.format(",d");
 
@@ -174,34 +251,58 @@
               .data(states)
             .enter()
               .append("option")
-              .text(function(d) { return d; } )
+              .text(function(d) { return d; } );
 
           menu.property("value", "All States");
 
           redraw();
           });
 
+        var ctrlKey;
+
+        d3.select(window)
+          .on("keydown", function() { ctrlKey = d3.event.ctrlKey; })
+          .on("keyup", function() { ctrlKey = false; });
+
         function change() {
           d3.transition()
-            .duration(750)
+            .duration(ctrlKey ? 5000 : 800)
             .each(redraw);
         }
 
         function redraw() {
           var county1 = menu.property("value");
 
-          if (county1 == "All States") {
-            var top = dataset.sort(function(a,b) {
-              if (b.crunchbase_count > a.crunchbase_count) {
-                return 1;
-              } else if (b.crunchbase_count < a.crunchbase_count) {
-                return -1;
-              } else {
-                return 0;
-              }
-            }).slice(0,10);
-          } else {
-            var top = nest_crunchbase[county1].slice(0, 10);
+          if (crunchbaseRadioButton.node().checked) {
+            if (county1 == "All States") {
+              var top = dataset.sort(function(a,b) {
+                if (b.crunchbase_count > a.crunchbase_count) {
+                  return 1;
+                } else if (b.crunchbase_count < a.crunchbase_count) {
+                  return -1;
+                } else {
+                  return 0;
+                }
+              }).slice(0, 15);
+            } else {
+              var top = nest_crunchbase[county1].slice(0, 15);
+            }
+          }
+
+          else if (cbpRadioButton.node().checked) {
+            if (county1 == "All States") {
+              var top = dataset.sort(function(a,b) {
+                if (b.cbp_small_biz_count > a.cbp_small_biz_count) {
+                  return 1;
+                } else if (b.cbp_small_biz_count < a.cbp_small_biz_count) {
+                  return -1;
+                } else {
+                  return 0;
+                }
+              }).slice(0, 15);
+            } else {
+              var top = nest_cbp[county1].slice(0, 15);
+            }
           }
 
           y.domain(top.map(function(d) { return d.county_name; }));
@@ -215,7 +316,12 @@
                             .style("fill-opacity", 0);
 
           barEnter.append("rect")
-                  .attr("width", function(d) { return x(d.crunchbase_count); })
+                  .attr("width", function(d) {
+                    if (crunchbaseRadioButton.node().checked) {
+                      return x(d.crunchbase_count);
+                    } else {
+                      return x(d.cbp_small_biz_count);
+                    }})
                   .attr("height", y.rangeBand())
                   .on("mouseover", mouseover)
                   .on("mousemove", mousemove)
@@ -231,24 +337,54 @@
 
           barEnter.append("text")
                   .attr("class", "value")
-                  .attr("x", function(d) { return x(d.crunchbase_count) + 3; })
+                  .attr("x", function(d) {
+                    if (crunchbaseRadioButton.node().checked) {
+                      return x(d.crunchbase_count) + 3;
+                    } else {
+                      return x(d.cbp_small_biz_count) + 3;
+                    }})
                   .attr("y", y.rangeBand() / 2)
                   .attr("dy", ".35em")
                   .attr("text-anchor", "start")
-                  .text(function(d) { return format(d.crunchbase_count); });
+                  .text(function(d) {
+                    if (crunchbaseRadioButton.node().checked) {
+                      return format(d.crunchbase_count);
+                    } else {
+                      return format(d.cbp_small_biz_count);
+                    }});
 
-          x.domain([0, top[0].crunchbase_count]);
+          if (crunchbaseRadioButton.node().checked) {
+            x.domain([0, top[0].crunchbase_count]);
+          } else {
+            x.domain([0, top[0].cbp_small_biz_count]);
+          }
 
           var barUpdate = d3.transition(bar)
                             .attr("transform", function(d) { return "translate(0," + (d.y0 = y(d.county_name)) + ")"; })
                             .style("fill-opacity", 1);
 
           barUpdate.select("rect")
-                   .attr("width", function(d) { return x(d.crunchbase_count) });
+                   .attr("width", function(d) {
+                     if (crunchbaseRadioButton.node().checked) {
+                       return x(d.crunchbase_count);
+                     } else {
+                       return x(d.cbp_small_biz_count);
+                     }})
+                  .style("fill", barColor);
 
           barUpdate.select(".value")
-                   .attr("x", function(d) { return x(d.crunchbase_count) + 3; })
-                   .text(function(d) { return format(d.crunchbase_count); })
+                   .attr("x", function(d) {
+                     if (crunchbaseRadioButton.node().checked) {
+                       return x(d.crunchbase_count) + 3;
+                     } else {
+                       return x(d.cbp_small_biz_count) + 3;
+                     }})
+                   .text(function(d) {
+                     if (crunchbaseRadioButton.node().checked) {
+                       return format(d.crunchbase_count);
+                     } else {
+                       return format(d.cbp_small_biz_count);
+                     }});
 
           var barExit = d3.transition(bar.exit())
                           .attr("transform", function(d) { return "translate(0," + (d.y0 + height) + ")"; })
@@ -256,20 +392,24 @@
                           .remove();
 
           barExit.select("rect")
-              .attr("width", function(d) { return x(d.crunchbase_count); })
+              .attr("width", function(d) {
+                if (crunchbaseRadioButton.node().checked) {
+                  return x(d.crunchbase_count);
+                } else {
+                  return x(d.cbp_small_biz_count);
+                }})
 
           barExit.select(".value")
-              .text(function(d) { return format(d.crunchbase_count); });
+              .text(function(d) {
+                if (crunchbaseRadioButton.node().checked) {
+                  return format(d.crunchbase_count);
+                } else {
+                  return format(d.cbp_small_biz_count);
+                }});
 
           d3.transition(svg).select(".x.axis")
               .attr("transform", function() { return "translate(0," + height + ")"; } )
-              .call(xAxis)
-            .append("text")
-              .attr("x", width / 2)
-              .attr("y", 25)
-              .attr("dy", ".71em")
-              .style("text-anchor", "middle")
-              .text("Number of Companies");
+              .call(xAxis);
         }
 
         function type(d) {
@@ -288,7 +428,7 @@
 			}
 
         function mousemove(d) {
-          if(nest_schools[d.state_name][d.county_name] == undefined) {
+          if(nest_schools[d.state_name] == undefined || nest_schools[d.state_name][d.county_name] == undefined) {
             var num_schools = 0
           } else {
             var num_schools = nest_schools[d.state_name][d.county_name].length
@@ -303,8 +443,16 @@
         div.style("display", "none");
       }
 
-        function returnLawSchools() {
-
+        function barColor(d) {
+          if (nest_schools[d.state_name] == undefined || nest_schools[d.state_name][d.county_name] == undefined) {
+            return "rgb(239,243,255)"
+          } else if (nest_schools[d.state_name][d.county_name].length <= 2) {
+            return "rgb(189,215,231)"
+          } else if (nest_schools[d.state_name][d.county_name].length <= 4) {
+            return "rgb(107,174,214)"
+          } else if (nest_schools[d.state_name][d.county_name].length >= 5) {
+            return "rgb(33,113,181)"
+          }
         }
 
         </script>
