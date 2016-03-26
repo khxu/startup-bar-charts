@@ -28,12 +28,8 @@
         <script src="js/footnotes.js" type="text/javascript"></script>
         <style>
 
-        .svg rect {
-          fill: rgb(45,99,127);
-        }
-
-        .svg rect:hover {
-          /*stroke-width:5;*/
+        rect.barColor:hover {
+          stroke-width:5;
           fill: rgb(194,185,167);
         }
 
@@ -91,19 +87,56 @@
 
         </style>
         <div class="column">
+        <a href="http://www.kevinhxu.com/">Home</a>
         <h1>Top 15 Counties by Number of Companies</h1>
-
-        <p id="chart">
-        </p>
+        <p class="directions">Select data using the menu and radio buttons. Hold ctrl to slow down the transitions. Hover mouse over bars and footnotes.</p>
+        <p id="chart"></p>
+        <p class="captions">Sources: <a href="https://data.crunchbase.com/page/crunchbase-open-data-map-odm" target="_blank">Crunchbase Data</a> as of December 2015, <a href="http://www.census.gov/econ/cbp/" target="_blank">County Business Patterns (2013)</a>, and, of course, <a href="https://en.wikipedia.org/wiki/List_of_law_schools_in_the_United_States" target="_blank">Wikipedia</a>.</p>
         <p id="menu"><b>State Data: </b><select></select></p>
         <form>
           <input class='dataButton' checked='checked' type='radio' name='dataset_button' value='crunchbaseDataButton' id='crunchbase_dataset'> Crunchbase Data<br>
-          <input class = 'dataButton' type = 'radio' name='dataset_button' value='cbpDataButton' id='cbp_dataset'> CBP Data
+          <input class = 'dataButton' type = 'radio' name='dataset_button' value='cbpDataButton' id='cbp_dataset'> County Business Patterns Data
         </form>
+        <h2>Bar chart exploration</h2>
+        <p>After <a href="http://www.kevinhxu.com/startup-mapper.html" target="_blank">Startup Mapper</a>, I figured another useful tool to explore the Crunchbase Open Data Map and County Business Patterns datasets would be an interactive bar chart.</p>
+        <p>Here, you can see that there's <i>some</i> overlap between the top counties in terms of number of company listings on Crunchbase vs. number of small businesses
+          <sup id="fnref:3.smallbizdef">
+              <a href="#fn:3.smallbizdef" rel="footnote">1</a>
+          </sup> in the County Business Patterns (CBP) dataset, but not a complete one. This isn't too surprising. After all, not every small business is looking for VC funding.</p>
+        <p>However, you can definitely see a correlation between the number of law schools in a county vs. the number of small businesses and startups. Whether that's because lawyers (who tend to stick around their alma maters after graduating) spur additional business activity, or because the factors that make certain areas fertile ground for new businesses also attract law school founders is unclear. At the same time, these charts only show <b>volume</b> of companies, rather than overall economic activity. There might be plenty of counties with few startups, but a strong cadre of larger players that boost the local economy. Generally, though, we think of competition as a good thing when it comes to an economy's health&#8212;and especially when it comes to antitrust law.
+          <sup id="fnref:3.competition">
+            <a href="#fn:3.competition" rel="footnote">2</a>
+          </sup></p>
+        <p>Personally, I'm a little biased<sup id="fnref:3.alot">
+          <a href="#fn:3.alot" rel="footnote">3</a>
+        </sup> toward greater competition, particularly when it comes to startups. Working with startups was one of the highlights of my law school experience, and I've been lucky enough to be able to continue that into my professional career. While I certainly don't think life is a <a href="http://www.kevinhxu.com/about-me.html" target="_blank">meritocracy</a>, I do believe that we live in a time of incredible potential for upward mobility. It feels like half of the startups out there are about democratizing something, whether it's <a href="https://medium.com/" target="_blank">publishing</a>, <a href="https://www.khanacademy.org/" target="_blank">education</a>, <a href="http://www.tableau.com/" target="_blank">data analytics</a>, or even <a href="https://zana.io/" target="_blank">entrepreneurship itself</a>.
+        <sup id="fnref:3.JOBS">
+          <a href="#fn:3.JOBS" rel="footnote">4</a>
+        </sup>Of course, these tools really only help if you have the time to learn and apply them&#8212;and time is something that's in short supply for someone working two minimum wage jobs to make ends meet.</p>
+        <div class="footnotes">
+            <hr>
+            <ol>
+              <li id="fn:3.smallbizdef">
+                <p>Defined as businesses with fewer than 500 employees.
+                </p>
+              </li>
+              <li id="fn:3.competition">
+                <p>"The heart of our national economic policy long has been faith in the value of competition." <a href="https://www.ravellaw.com/opinions/41707ed74df6610a14b2dfa08c27701a" target="_blank"><i>Standard Oil Co. v. Trade Comm'N.</i></a>, 340 U.S. 231, 247-48 (1951).
+                </p>
+              </li>
+              <li id="fn:3.alot">
+                <p>Okay, maybe a LOT biased.
+                </p>
+              </li>
+              <li id="fn:3.JOBS">
+                <p>Even the government's getting in on democratizing startups with the <a href="https://en.wikipedia.org/wiki/Jumpstart_Our_Business_Startups_Act" target="_blank">JOBS Act</a>, but <a href="http://ssrn.com/abstract=2639879/" target="_blank">not everyone's</a> too sure about the ultimate effect of equity crowdfunding.
+                </p>
+              </li>
+            </ol>
         </div>
         <script>
 
-        var margin = {top: 20, right: 175, bottom: 20, left: 170},
+        var margin = {top: 0, right: 175, bottom: 20, left: 170},
         width = 960 - margin.left - margin.right,
         height = 400 - margin.top - margin.bottom;
 
@@ -323,6 +356,7 @@
                       return x(d.cbp_small_biz_count);
                     }})
                   .attr("height", y.rangeBand())
+                  .attr("class", "barColor")
                   .on("mouseover", mouseover)
                   .on("mousemove", mousemove)
                   .on("mouseout", mouseout);
@@ -425,6 +459,9 @@
 
         function mouseover() {
 			  div.style("display", "inline");
+        d3.select(this)
+          .style("stroke", "black")
+          .style("stroke-width", 2)
 			}
 
         function mousemove(d) {
@@ -441,6 +478,8 @@
 
         function mouseout() {
         div.style("display", "none");
+        d3.select(this)
+          .style("stroke-width", 0);
       }
 
         function barColor(d) {
